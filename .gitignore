@@ -1,0 +1,14 @@
+# ignore idea files
+*.iml
+.idea
+
+# ignore eclipse files
+.project
+.classpath
+.settings
+
+# ignore target directories
+target
+
+# ignore logs
+*.log
