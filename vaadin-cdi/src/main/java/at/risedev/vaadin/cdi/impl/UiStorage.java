@@ -14,26 +14,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @SessionScoped
 public class UiStorage implements Serializable {
 
-    @SuppressWarnings("unchecked")
     public Map<Integer, ContextualStorage> getContextualStorageMap() {
-        VaadinSession vaadinSession = VaadinSession.getCurrent();
-        if (vaadinSession == null) {
-            throw new IllegalStateException("No active Vaadin session");
-        }
-        Map<Integer, ContextualStorage> map = (Map<Integer, ContextualStorage>) vaadinSession.getAttribute(UiStorage.class.getName());
-        if (map == null) {
-            map = new ConcurrentHashMap<>();
-            vaadinSession.setAttribute(UiStorage.class.getName(), map);
-        }
-        return map;
+        return getInternalMap();
     }
 
     public ContextualStorage get(Integer uiId) {
-        return getContextualStorageMap().get(uiId);
+        return getInternalMap().get(uiId);
     }
 
     public ContextualStorage put(Integer uiId, ContextualStorage newStorage) {
-        return getContextualStorageMap().putIfAbsent(uiId, newStorage);
+        return getInternalMap().putIfAbsent(uiId, newStorage);
     }
 
 
@@ -48,7 +38,7 @@ public class UiStorage implements Serializable {
      * @return the old storageMap.
      */
     public Map<Integer, ContextualStorage> forceNewStorage() {
-        Map<Integer, ContextualStorage> oldStorageMap = getContextualStorageMap();
+        ConcurrentHashMap<Integer, ContextualStorage> oldStorageMap = getInternalMap();
         VaadinSession vaadinSession = VaadinSession.getCurrent();
         vaadinSession.setAttribute(UiStorage.class.getName(), new ConcurrentHashMap<Integer, ContextualStorage>());
         return oldStorageMap;
@@ -70,6 +60,20 @@ public class UiStorage implements Serializable {
         for (ContextualStorage contextualStorage : oldUiContextStorages.values()) {
             AbstractContext.destroyAllActive(contextualStorage);
         }
+    }
 
+    @SuppressWarnings("unchecked")
+    private ConcurrentHashMap<Integer, ContextualStorage> getInternalMap() {
+        VaadinSession vaadinSession = VaadinSession.getCurrent();
+        if (vaadinSession == null) {
+            throw new IllegalStateException("No active Vaadin session");
+        }
+        ConcurrentHashMap<Integer, ContextualStorage> map =
+                (ConcurrentHashMap<Integer, ContextualStorage>) vaadinSession.getAttribute(UiStorage.class.getName());
+        if (map == null) {
+            map = new ConcurrentHashMap<>();
+            vaadinSession.setAttribute(UiStorage.class.getName(), map);
+        }
+        return map;
     }
 }
